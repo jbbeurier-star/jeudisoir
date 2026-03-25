@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Une question importante</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #fff5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lora', serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      font-size: 2rem;
+      color: #fce4ec;
+      word-break: break-all;
+      line-height: 3.5rem;
+      letter-spacing: 1.5rem;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      background: white;
+      border-radius: 24px;
+      padding: 60px 50px;
+      box-shadow: 0 8px 40px rgba(233, 30, 99, 0.12);
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .emoji {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      display: block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    h1 {
+      font-size: 1.55rem;
+      font-weight: 600;
+      color: #2d2d2d;
+      line-height: 1.4;
+      margin-bottom: 40px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-yes {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 50px;
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(233, 30, 99, 0.3);
+    }
+
+    .btn-yes:hover {
+      background: #c2185b;
+      transform: scale(1.05);
+    }
+
+    /* NO button lives fixed over the page */
+    #btnNo {
+      background: white;
+      color: #555;
+      border: 2px solid #999;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 14px 40px;
+      border-radius: 50px;
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      cursor: pointer;
+      position: fixed;
+      z-index: 999;
+      user-select: none;
+      -webkit-user-select: none;
+      /* start hidden, JS will position then show */
+      opacity: 0;
+    }
+
+    .success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .success.show { display: flex; animation: fadeIn 0.6s ease; }
+    .success .big-emoji { font-size: 4rem; animation: bounce 0.6s ease; }
+    @keyframes bounce {
+      0%   { transform: scale(0); }
+      60%  { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .success p { font-size: 1.3rem; color: #e91e63; font-weight: 600; }
+    .success small { color: #999; font-style: italic; }
+    .question-block.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="question-block" id="questionBlock">
+      <span class="emoji">🌙</span>
+      <h1>est-ce qu'on se voit<br>jeudi soir&nbsp;?</h1>
+      <div class="buttons">
+        <button class="btn-yes" id="btnYes" onclick="sayYes()">Oui 🥰</button>
+        <!-- invisible placeholder same size as NO button so card width accounts for it -->
+        <span id="noPlaceholder" style="display:inline-block;padding:14px 40px;font-size:1.1rem;visibility:hidden;border:2px solid transparent;border-radius:50px;">Non</span>
+      </div>
+    </div>
+    <div class="success" id="successBlock">
+      <div class="big-emoji">🎉</div>
+      <p>Super, jeudi alors !</p>
+      <small>j'avais hâte que tu dises oui</small>
+    </div>
+  </div>
+
+  <button id="btnNo" ontouchstart="escapeBtn(event)">Non</button>
+
+  <script>
+    const btn = document.getElementById('btnNo');
+    const placeholder = document.getElementById('noPlaceholder');
+
+    function snapToPlaceholder() {
+      const r = placeholder.getBoundingClientRect();
+      btn.style.transition = 'none';
+      btn.style.left = r.left + 'px';
+      btn.style.top  = r.top  + 'px';
+      btn.style.width = r.width + 'px';
+      // show after positioning
+      requestAnimationFrame(() => { btn.style.opacity = '1'; });
+    }
+
+    window.addEventListener('load', snapToPlaceholder);
+    window.addEventListener('resize', snapToPlaceholder);
+
+    btn.addEventListener('mouseenter', escapeBtn);
+
+    function escapeBtn(e) {
+      if (e && e.cancelable) e.preventDefault();
+
+      const margin = 16;
+      const bw = btn.offsetWidth;
+      const bh = btn.offsetHeight;
+      const maxX = window.innerWidth  - bw - margin;
+      const maxY = window.innerHeight - bh - margin;
+      const curX = parseFloat(btn.style.left) || 0;
+      const curY = parseFloat(btn.style.top)  || 0;
+
+      let bestX = margin, bestY = margin, bestDist = 0;
+      for (let i = 0; i < 30; i++) {
+        const rx = margin + Math.random() * (maxX - margin * 2);
+        const ry = margin + Math.random() * (maxY - margin * 2);
+        const dist = Math.hypot(rx - curX, ry - curY);
+        if (dist > bestDist) { bestDist = dist; bestX = rx; bestY = ry; }
+      }
+
+      btn.style.transition = 'left 0.22s ease, top 0.22s ease';
+      btn.style.left = bestX + 'px';
+      btn.style.top  = bestY + 'px';
+    }
+
+    function sayYes() {
+      document.getElementById('questionBlock').classList.add('hidden');
+      document.getElementById('successBlock').classList.add('show');
+      btn.style.display = 'none';
+      launchConfetti();
+    }
+
+    function launchConfetti() {
+      const colors = ['#e91e63','#f48fb1','#ff80ab','#fce4ec','#ad1457'];
+      const style = document.createElement('style');
+      style.textContent = `@keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }`;
+      document.head.appendChild(style);
+      for (let i = 0; i < 60; i++) {
+        const el = document.createElement('div');
+        el.style.cssText = `
+          position:fixed; width:${6+Math.random()*8}px; height:${6+Math.random()*8}px;
+          background:${colors[Math.floor(Math.random()*colors.length)]};
+          border-radius:${Math.random()>.5?'50%':'2px'};
+          left:${Math.random()*100}vw; top:-10px; opacity:1;
+          pointer-events:none; z-index:9999;
+          animation:fall ${1.5+Math.random()*2}s ease-in forwards;
+          animation-delay:${Math.random()*0.8}s;
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }
+    }
+  </script>
+</body>
+</html>

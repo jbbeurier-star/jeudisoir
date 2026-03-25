@@ -40,7 +40,7 @@
       padding: 60px 50px;
       box-shadow: 0 8px 40px rgba(233, 30, 99, 0.12);
       text-align: center;
-      max-width: 420px;
+      max-width: 480px;
       width: 90%;
       animation: fadeIn 0.8s ease;
     }
@@ -72,23 +72,21 @@
 
     .buttons {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       justify-content: center;
       align-items: center;
+      flex-wrap: wrap;
     }
 
-    /* shared button base */
-    .btn-yes, #btnNo {
-      padding: 14px 40px;
+    /* YES button */
+    .btn-yes {
+      padding: 14px 36px;
       border-radius: 50px;
       font-family: 'Lora', serif;
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
       border: none;
-    }
-
-    .btn-yes {
       background: #e91e63;
       color: white;
       box-shadow: 0 4px 16px rgba(233, 30, 99, 0.3);
@@ -96,23 +94,31 @@
     }
     .btn-yes:hover { background: #c2185b; transform: scale(1.05); }
 
-    #btnNo {
+    /* NON / PEUT-ÊTRE buttons — static style */
+    .btn-escape {
+      padding: 14px 36px;
+      border-radius: 50px;
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
       background: white;
       color: #555;
       border: 2px solid #999;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       user-select: none;
       -webkit-user-select: none;
-      /* static by default — becomes fixed once escaped */
       position: static;
     }
 
-    #btnNo.escaped {
+    /* Once they escape, they go fixed */
+    .btn-escape.is-escaped {
       position: fixed;
       z-index: 999;
       transition: left 0.22s ease, top 0.22s ease;
     }
 
+    /* Success */
     .success {
       display: none;
       flex-direction: column;
@@ -138,9 +144,8 @@
       <h1>est-ce qu'on se voit<br>jeudi soir&nbsp;?</h1>
       <div class="buttons">
         <button class="btn-yes" onclick="sayYes()">Oui 🥰</button>
-        <button id="btnNo"
-          onmouseenter="escapeBtn()"
-          ontouchstart="escapeBtn(event)">Non</button>
+        <button class="btn-escape" onmouseenter="escapeBtn(this)" ontouchstart="escapeBtn(this,event)">Non</button>
+        <button class="btn-escape" onmouseenter="escapeBtn(this)" ontouchstart="escapeBtn(this,event)">Peut-être</button>
       </div>
     </div>
     <div class="success" id="successBlock">
@@ -150,29 +155,27 @@
   </div>
 
   <script>
-    const btn = document.getElementById('btnNo');
-    let hasEscaped = false;
+    const escapedBtns = new WeakMap();
 
-    function escapeBtn(e) {
+    function escapeBtn(btn, e) {
       if (e && e.cancelable) e.preventDefault();
 
-      if (!hasEscaped) {
-        // First escape: measure position, switch to fixed at same spot, then move
+      if (!escapedBtns.get(btn)) {
+        // Snap to fixed at current visual position, then fly away
         const r = btn.getBoundingClientRect();
-        btn.classList.add('escaped');
-        btn.style.left = r.left + 'px';
-        btn.style.top  = r.top  + 'px';
+        btn.classList.add('is-escaped');
+        btn.style.left   = r.left   + 'px';
+        btn.style.top    = r.top    + 'px';
         btn.style.width  = r.width  + 'px';
         btn.style.height = r.height + 'px';
-        hasEscaped = true;
-        // Small delay so transition kicks in after position is set
-        requestAnimationFrame(() => requestAnimationFrame(moveAway));
+        escapedBtns.set(btn, true);
+        requestAnimationFrame(() => requestAnimationFrame(() => moveAway(btn)));
       } else {
-        moveAway();
+        moveAway(btn);
       }
     }
 
-    function moveAway() {
+    function moveAway(btn) {
       const margin = 16;
       const bw = btn.offsetWidth;
       const bh = btn.offsetHeight;
@@ -196,7 +199,7 @@
     function sayYes() {
       document.getElementById('questionBlock').classList.add('hidden');
       document.getElementById('successBlock').classList.add('show');
-      btn.style.display = 'none';
+      document.querySelectorAll('.btn-escape').forEach(b => b.style.display = 'none');
       launchConfetti();
     }
 

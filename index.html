@@ -59,7 +59,7 @@
 
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.15); }
+      50%       { transform: scale(1.15); }
     }
 
     h1 {
@@ -75,46 +75,42 @@
       gap: 16px;
       justify-content: center;
       align-items: center;
-      flex-wrap: wrap;
+    }
+
+    /* shared button base */
+    .btn-yes, #btnNo {
+      padding: 14px 40px;
+      border-radius: 50px;
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
     }
 
     .btn-yes {
       background: #e91e63;
       color: white;
-      border: none;
-      padding: 14px 40px;
-      border-radius: 50px;
-      font-family: 'Lora', serif;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
       box-shadow: 0 4px 16px rgba(233, 30, 99, 0.3);
+      transition: background 0.2s, transform 0.1s;
     }
+    .btn-yes:hover { background: #c2185b; transform: scale(1.05); }
 
-    .btn-yes:hover {
-      background: #c2185b;
-      transform: scale(1.05);
-    }
-
-    /* NO button lives fixed over the page */
     #btnNo {
       background: white;
       color: #555;
       border: 2px solid #999;
-      font-weight: 600;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      padding: 14px 40px;
-      border-radius: 50px;
-      font-family: 'Lora', serif;
-      font-size: 1.1rem;
-      cursor: pointer;
-      position: fixed;
-      z-index: 999;
       user-select: none;
       -webkit-user-select: none;
-      /* start hidden, JS will position then show */
-      opacity: 0;
+      /* static by default — becomes fixed once escaped */
+      position: static;
+    }
+
+    #btnNo.escaped {
+      position: fixed;
+      z-index: 999;
+      transition: left 0.22s ease, top 0.22s ease;
     }
 
     .success {
@@ -131,7 +127,6 @@
       100% { transform: scale(1); }
     }
     .success p { font-size: 1.3rem; color: #e91e63; font-weight: 600; }
-    .success small { color: #999; font-style: italic; }
     .question-block.hidden { display: none; }
   </style>
 </head>
@@ -142,9 +137,10 @@
       <span class="emoji">🌙</span>
       <h1>est-ce qu'on se voit<br>jeudi soir&nbsp;?</h1>
       <div class="buttons">
-        <button class="btn-yes" id="btnYes" onclick="sayYes()">Oui 🥰</button>
-        <!-- invisible placeholder same size as NO button so card width accounts for it -->
-        <span id="noPlaceholder" style="display:inline-block;padding:14px 40px;font-size:1.1rem;visibility:hidden;border:2px solid transparent;border-radius:50px;">Non</span>
+        <button class="btn-yes" onclick="sayYes()">Oui 🥰</button>
+        <button id="btnNo"
+          onmouseenter="escapeBtn()"
+          ontouchstart="escapeBtn(event)">Non</button>
       </div>
     </div>
     <div class="success" id="successBlock">
@@ -153,32 +149,30 @@
     </div>
   </div>
 
-  <button id="btnNo" ontouchstart="escapeBtn(event)">Non</button>
-
   <script>
     const btn = document.getElementById('btnNo');
-    const placeholder = document.getElementById('noPlaceholder');
-
-    function snapToPlaceholder() {
-      const r = placeholder.getBoundingClientRect();
-      const yesBtn = document.getElementById('btnYes');
-      const yr = yesBtn.getBoundingClientRect();
-      btn.style.transition = 'none';
-      btn.style.left = r.left + 'px';
-      btn.style.top  = yr.top + 'px';
-      btn.style.width = r.width + 'px';
-      btn.style.height = yr.height + 'px';
-      requestAnimationFrame(() => { btn.style.opacity = '1'; });
-    }
-
-    window.addEventListener('load', snapToPlaceholder);
-    window.addEventListener('resize', snapToPlaceholder);
-
-    btn.addEventListener('mouseenter', escapeBtn);
+    let hasEscaped = false;
 
     function escapeBtn(e) {
       if (e && e.cancelable) e.preventDefault();
 
+      if (!hasEscaped) {
+        // First escape: measure position, switch to fixed at same spot, then move
+        const r = btn.getBoundingClientRect();
+        btn.classList.add('escaped');
+        btn.style.left = r.left + 'px';
+        btn.style.top  = r.top  + 'px';
+        btn.style.width  = r.width  + 'px';
+        btn.style.height = r.height + 'px';
+        hasEscaped = true;
+        // Small delay so transition kicks in after position is set
+        requestAnimationFrame(() => requestAnimationFrame(moveAway));
+      } else {
+        moveAway();
+      }
+    }
+
+    function moveAway() {
       const margin = 16;
       const bw = btn.offsetWidth;
       const bh = btn.offsetHeight;
@@ -195,7 +189,6 @@
         if (dist > bestDist) { bestDist = dist; bestX = rx; bestY = ry; }
       }
 
-      btn.style.transition = 'left 0.22s ease, top 0.22s ease';
       btn.style.left = bestX + 'px';
       btn.style.top  = bestY + 'px';
     }
